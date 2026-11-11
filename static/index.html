@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Telegram Manager</title>
+<style>
+  :root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body {
+    background: var(--bg-color);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+  .app-container {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #60a5fa;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .section { margin-top: 16px; }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:active { background: var(--primary-hover); transform: scale(0.98); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:active { background: #334155; }
+  .btn-danger {
+    background: var(--danger);
+  }
+  .btn-sm {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+    width: auto;
+    margin: 0;
+  }
+  input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #090d16;
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    margin-top: 8px;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--primary); }
+  .input-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 12px;
+    display: block;
+  }
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 16px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+  .divider:not(:empty)::before { margin-right: .5em; }
+  .divider:not(:empty)::after { margin-left: .5em; }
+  .status-box {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+  }
+  .status-box.error { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); display: block; }
+  .status-box.success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); display: block; }
+  .status-box.info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); display: block; }
+  .hidden { display: none !important; }
+  
+  .account-item {
+    background: #090d16;
+    padding: 14px;
+    border-radius: 12px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+  }
+  .account-item.active {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+  }
+  .account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .account-key { font-weight: 700; font-size: 14px; }
+  .account-phone { font-size: 13px; color: var(--text-muted); }
+
+  .chat-item {
+    background: #090d16;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .chat-item:hover { background: #162033; }
+  .chat-name { font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; }
+  .chat-last { font-size: 12px; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .unread-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  /* Send Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+  }
+  .modal-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header">
+    <h1>Telegram Manager</h1>
+    <p>Multi-Account Manager & Web Inbox</p>
+  </div>
+
+  <!-- Step 1: Login / Send Code -->
+  <div id="step-login">
+    <span class="input-label">ফোন নম্বর দিন (Country code সহ):</span>
+    <input id="phone-input" type="tel" placeholder="+8801700000000">
+    <button class="btn" onclick="sendCode()">📩 কোড পাঠান (Send OTP)</button>
+
+    <div class="divider">অথবা</div>
+
+    <button class="btn btn-outline" onclick="requestTgContact()">📱 Telegram কন্ট্যাক্ট শেয়ার করুন</button>
+    
+    <div id="login-status" class="status-box"></div>
+
+    <div id="existing-accounts-preview" class="section hidden">
+      <div class="divider">যুক্ত একাউন্ট</div>
+      <button class="btn btn-outline" onclick="showDashboard()">ড্যাশবোর্ডে ফিরে যান</button>
+    </div>
+  </div>
+
+  <!-- Step 2: OTP -->
+  <div id="step-otp" class="hidden">
+    <h3 style="font-size:16px; text-align:center; color:#60a5fa;">OTP কোড দিন</h3>
+    <p style="text-align:center; font-size:13px; color:var(--text-muted); margin-top:6px;">
+      <span id="otp-phone-display">আপনার নম্বরে</span> Telegram থেকে পাওয়া কোডটি দিন।
+    </p>
+    <input id="otp-input" type="number" placeholder="12345" style="text-align:center; font-size:24px; letter-spacing:4px;">
+    <button class="btn" onclick="submitOtp()">লগইন করুন</button>
+    <button class="btn btn-outline" onclick="cancelPending()">পিছনে যান / বাতিল</button>
+    <div id="otp-status" class="status-box"></div>
+  </div>
+
+  <!-- Step 3: 2FA Password -->
+  <div id="step-password" class="hidden">
+    <h3 style="font-size:16px; text-align:center; color:#60a5fa;">Two-Step Verification</h3>
+    <p style="text-align:center; font-size:13px; color:var(--text-muted); margin-top:6px;">
+      এই টেলিগ্রাম একাউন্টে 2FA পাসওয়ার্ড দেওয়া আছে।
+    </p>
+    <input id="password-input" type="password" placeholder="2FA Password">
+    <button class="btn" onclick="submitPassword()">লগইন সম্পন্ন করুন</button>
+    <button class="btn btn-outline" onclick="cancelPending()">বাতিল করুন</button>
+    <div id="password-status" class="status-box"></div>
+  </div>
+
+  <!-- Step 4: Dashboard -->
+  <div id="step-dashboard" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:16px;">আমার একাউন্টসমূহ</h3>
+      <button class="btn btn-outline btn-sm" onclick="showAddAccount()">+ নতুন যোগ করুন</button>
+    </div>
+
+    <div id="accounts-list" class="section"></div>
+
+    <div class="section" style="margin-top:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:16px;">সাম্প্রতিক চ্যাট (Inbox)</h3>
+        <button class="btn btn-outline btn-sm" onclick="loadInbox()">🔄 রিফ্রেশ</button>
+      </div>
+      <div id="inbox-list">
+        <p style="text-align:center; color:var(--text-muted); font-size:13px;">চ্যাট লোড করতে রিফ্রেশ চাপুন</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Send Message Modal -->
+<div id="send-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 id="modal-chat-title" style="font-size:16px; margin-bottom:8px;">মেসেজ পাঠান</h3>
+    <textarea id="modal-text" style="width:100%; height:100px; background:#090d16; border:1px solid var(--border); border-radius:10px; color:white; padding:10px; font-size:14px; outline:none; resize:none;"></textarea>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn btn-outline" onclick="closeModal()">বাতিল</button>
+      <button class="btn" onclick="doSendMessage()">পাঠান</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.expand();
+  tg.ready();
+}
+
+const initData = tg?.initData || "";
+let targetChatId = null;
+let pollTimer = null;
+
+function setStatus(elementId, msg, type) {
+  const el = document.getElementById(elementId);
+  if (!msg) {
+    el.style.display = "none";
+    el.className = "status-box";
+    return;
+  }
+  el.innerText = msg;
+  el.className = `status-box ${type}`;
+  el.style.display = "block";
+}
+
+async function api(endpoint, payload = {}) {
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData, ...payload }),
+    });
+    return await res.json();
+  } catch (err) {
+    return { error: "সার্ভারে কানেক্ট করা যায়নি: " + err.message };
+  }
+}
+
+function show(stepId) {
+  ["step-login", "step-otp", "step-password", "step-dashboard"].forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+  document.getElementById(stepId).classList.remove("hidden");
+}
+
+async function loadSession() {
+  const data = await api("/api/session");
+  if (data.error) {
+    setStatus("login-status", data.error, "error");
+    return;
+  }
+
+  if (data.pending) {
+    if (data.phone) {
+      document.getElementById("otp-phone-display").innerText = data.phone;
+    }
+    if (data.waiting_password) {
+      show("step-password");
+    } else {
+      show("step-otp");
+    }
+  } else if (data.accounts && data.accounts.length > 0) {
+    show("step-dashboard");
+    renderAccounts(data.accounts, data.active);
+  } else {
+    show("step-login");
+  }
+}
+
+async function sendCode() {
+  const phone = document.getElementById("phone-input").value.trim();
+  if (!phone) {
+    setStatus("login-status", "ফোন নম্বর লিখুন", "error");
+    return;
+  }
+  setStatus("login-status", "OTP পাঠানো হচ্ছে...", "info");
+
+  const res = await api("/api/send-code", { phone });
+  if (res.status === "ok") {
+    document.getElementById("otp-phone-display").innerText = res.phone;
+    setStatus("login-status", "", "");
+    show("step-otp");
+  } else {
+    setStatus("login-status", res.error || "কোড পাঠাতে ব্যর্থ", "error");
+  }
+}
+
+function requestTgContact() {
+  if (tg && tg.requestContact) {
+    tg.requestContact((granted) => {
+      if (granted) {
+        setStatus("login-status", "কন্ট্যাক্ট পাঠানো হয়েছে। কোড চেক করা হচ্ছে...", "info");
+        startContactPolling();
+      } else {
+        setStatus("login-status", "কন্ট্যাক্ট শেয়ার করা হয়নি।", "error");
+      }
+    });
+  } else {
+    setStatus("login-status", "বট চ্যাটে 'Share your contact' চাপুন, তারপর অ্যাপ রিফ্রেশ দিন।", "info");
+    startContactPolling();
+  }
+}
+
+function startContactPolling() {
+  let count = 0;
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    count++;
+    const data = await api("/api/session");
+    if (data.pending) {
+      clearInterval(pollTimer);
+      if (data.phone) document.getElementById("otp-phone-display").innerText = data.phone;
+      show("step-otp");
+    }
+    if (count > 15) clearInterval(pollTimer);
+  }, 2000);
+}
+
+async function submitOtp() {
+  const otp = document.getElementById("otp-input").value.trim();
+  if (!otp) {
+    setStatus("otp-status", "OTP কোড লিখুন", "error");
+    return;
+  }
+  setStatus("otp-status", "যাচাই করা হচ্ছে...", "info");
+
+  const res = await api("/api/otp", { otp });
+  if (res.status === "need_password") {
+    setStatus("otp-status", "", "");
+    show("step-password");
+  } else if (res.status === "ok") {
+    setStatus("otp-status", "লগইন সফল!", "success");
+    setTimeout(loadSession, 800);
+  } else {
+    setStatus("otp-status", res.error || "OTP সঠিক নয়", "error");
+  }
+}
+
+async function submitPassword() {
+  const password = document.getElementById("password-input").value;
+  if (!password) {
+    setStatus("password-status", "পাসওয়ার্ড লিখুন", "error");
+    return;
+  }
+  setStatus("password-status", "যাচাই করা হচ্ছে...", "info");
+
+  const res = await api("/api/password", { password });
+  if (res.status === "ok") {
+    setStatus("password-status", "লগইন সফল!", "success");
+    setTimeout(loadSession, 800);
+  } else {
+    setStatus("password-status", res.error || "ভুল পাসওয়ার্ড", "error");
+  }
+}
+
+async function cancelPending() {
+  await api("/api/cancel-login");
+  loadSession();
+}
+
+function renderAccounts(accounts, active) {
+  const container = document.getElementById("accounts-list");
+  container.innerHTML = "";
+
+  accounts.forEach(acc => {
+    const isActive = acc.key === active;
+    const div = document.createElement("div");
+    div.className = `account-item ${isActive ? "active" : ""}`;
+    div.innerHTML = `
+      <div class="account-info">
+        <span class="account-key">${acc.key} ${isActive ? "• Active" : ""}</span>
+        <span class="account-phone">${acc.phone}</span>
+      </div>
+      <div>
+        ${!isActive ? `<button class="btn btn-outline btn-sm" onclick="selectAccount('${acc.key}')">সুইচ করুন</button>` : `<span style="color:#10b981; font-weight:700; font-size:12px;">সক্রিয়</span>`}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function selectAccount(key) {
+  await api("/api/select", { key });
+  loadSession();
+  loadInbox();
+}
+
+function showAddAccount() {
+  show("step-login");
+  document.getElementById("existing-accounts-preview").classList.remove("hidden");
+}
+
+function showDashboard() {
+  show("step-dashboard");
+}
+
+async function loadInbox() {
+  const box = document.getElementById("inbox-list");
+  box.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px;">লোড হচ্ছে...</p>`;
+
+  const data = await api("/api/inbox");
+  if (data.error) {
+    box.innerHTML = `<p style="text-align:center; color:#f87171; font-size:13px;">${data.error}</p>`;
+    return;
+  }
+
+  box.innerHTML = "";
+  if (!data.chats || data.chats.length === 0) {
+    box.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px;">কোনো চ্যাট পাওয়া যায়নি</p>`;
+    return;
+  }
+
+  data.chats.forEach(c => {
+    const item = document.createElement("div");
+    item.className = "chat-item";
+    item.onclick = () => openSendModal(c.id, c.name);
+    item.innerHTML = `
+      <div class="chat-name">
+        <span>${escapeHtml(c.name)}</span>
+        ${c.unread > 0 ? `<span class="unread-badge">${c.unread}</span>` : ""}
+      </div>
+      <div class="chat-last">${escapeHtml(c.last_message || "মেসেজ নেই")}</div>
+    `;
+    box.appendChild(item);
+  });
+}
+
+function openSendModal(chatId, chatName) {
+  targetChatId = chatId;
+  document.getElementById("modal-chat-title").innerText = `মেসেজ পাঠান: ${chatName}`;
+  document.getElementById("modal-text").value = "";
+  document.getElementById("send-modal").classList.remove("hidden");
+}
+
+function closeModal() {
+  document.getElementById("send-modal").classList.add("hidden");
+}
+
+async function doSendMessage() {
+  const text = document.getElementById("modal-text").value.trim();
+  if (!text || !targetChatId) return;
+
+  closeModal();
+  const res = await api("/api/send", { chat_id: targetChatId, text });
+  if (res.status === "ok") {
+    alert("✅ মেসেজ পাঠানো হয়েছে!");
+    loadInbox();
+  } else {
+    alert("❌ মেসেজ পাঠানো যায়নি: " + (res.error || "Error"));
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return "";
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Initial session check
+loadSession();
+</script>
+</body>
+</html>
